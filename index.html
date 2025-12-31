@@ -3,309 +3,402 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>テキサスホールデム・リアル</title>
+    <title>Texas Hold'em</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --poker-green: #1a472a; --accent: #f1c40f; --card-red: #c0392b; --card-shadow: rgba(0,0,0,0.5); }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--poker-green); color: white; margin: 0; text-align: center; overflow-x: hidden; }
-        .screen { display: none; padding: 15px; min-height: 100vh; box-sizing: border-box; flex-direction: column; align-items: center; }
+        :root {
+            --gold: #d4af37;
+            --table-green: radial-gradient(circle, #1a472a 0%, #0d2b1a 100%);
+            --dark: #0a0a0a;
+            --card-red: #c0392b;
+            --chip-1: #ffffff; --chip-5: #e74c3c; --chip-10: #3498db; --chip-25: #27ae60; --chip-50: #f1c40f;
+        }
+        body { font-family: 'Arial Rounded MT Bold', 'Helvetica Neue', sans-serif; background: var(--dark); color: white; margin: 0; text-align: center; overflow: hidden; user-select: none; }
+        
+        .screen { display: none; padding: 15px; min-height: 100vh; box-sizing: border-box; flex-direction: column; align-items: center; background: var(--table-green); }
         .active { display: flex; }
-        
-        /* ボタンデザイン */
-        button { padding: 14px; font-size: 16px; cursor: pointer; border-radius: 12px; border: none; background: #27ae60; color: white; margin: 6px; width: 90%; max-width: 300px; box-shadow: 0 5px #1e8449; transition: all 0.1s; font-weight: bold; }
-        button:active { transform: translateY(3px); box-shadow: 0 2px #1e8449; }
-        .btn-blue { background: #2980b9; box-shadow: 0 5px #1a5276; }
-        .btn-orange { background: #e67e22; box-shadow: 0 5px #a04000; }
-        .btn-red { background: #c0392b; box-shadow: 0 5px #7b241c; }
-        
-        input { padding: 15px; font-size: 18px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.3); width: 250px; margin-bottom: 25px; text-align: center; background: rgba(255,255,255,0.9); color: #333; }
 
-        /* カードのリアルなデザイン */
+        /* UIパーツ */
+        h1 { color: var(--gold); margin-top: 50px; font-size: 2.5rem; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        button { 
+            padding: 12px 20px; font-size: 14px; cursor: pointer; border-radius: 30px; border: 2px solid var(--gold); 
+            background: rgba(0,0,0,0.6); color: white; margin: 5px; width: 85%; max-width: 300px; font-weight: bold; transition: 0.2s;
+        }
+        button:active { transform: scale(0.95); opacity: 0.8; }
+        button:disabled { opacity: 0.3; cursor: default; }
+        .btn-main { background: var(--gold); color: black; font-size: 18px; }
+        .btn-home { position: absolute; top: 10px; left: 10px; width: auto; font-size: 10px; padding: 5px 10px; border-color: rgba(255,255,255,0.5); z-index: 100; }
+
+        /* カード */
         .card { 
-            width: 65px; height: 95px; background: white; border-radius: 8px; color: black; 
+            width: 48px; height: 70px; background: white; border-radius: 5px; color: black; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            font-size: 22px; font-weight: bold; box-shadow: 2px 4px 10px var(--card-shadow); 
-            position: relative; border: 1px solid #ddd;
+            font-size: 16px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 1px solid #999;
         }
-        .card.back { 
-            background: var(--card-red) !important; border: 4px solid white; color: white !important;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px);
-        }
+        .card.back { background: var(--card-red) !important; border: 2px solid white; color: white !important; }
         .suit-red { color: #e74c3c; }
 
-        .slots-container { display: flex; justify-content: space-around; width: 100%; margin: 15px 0; }
-        .slot { width: 75px; height: 75px; border-radius: 50%; border: 3px dashed rgba(255,255,255,0.3); font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
-        .slot.connected { border-style: solid; border-color: var(--accent); background: rgba(241,196,15,0.2); box-shadow: 0 0 15px var(--accent); }
+        /* チップ */
+        .chip-container { display: flex; gap: 5px; justify-content: center; margin-top: 10px; width: 100%; }
+        .chip {
+            width: 42px; height: 42px; border-radius: 50%; border: 3px dashed rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 11px; color: black; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+        }
+        .chip span { font-size: 8px; display: block; }
 
-        .area-label { font-size: 12px; color: var(--accent); margin: 20px 0 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; }
-        .card-row { display: flex; gap: 10px; justify-content: center; min-height: 110px; width: 100%; flex-wrap: wrap; padding: 10px; }
+        .pot-area { background: rgba(0,0,0,0.5); border-radius: 50px; padding: 5px 25px; margin: 10px; border: 1px solid var(--gold); }
+        #pot-amount, #p-pot-val { color: var(--gold); font-size: 24px; font-weight: bold; }
 
-        #hand-rank { font-size: 26px; font-weight: bold; color: var(--accent); margin: 20px 0; height: 35px; text-shadow: 2px 2px 5px black; }
+        /* Bot grid */
+        .bots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 100%; margin-top: 20px; }
+        .bot-player { background: rgba(255,255,255,0.1); padding: 5px; border-radius: 8px; font-size: 9px; border: 1px solid transparent; }
+        .bot-player.winner-highlight { border-color: var(--gold); background: rgba(212, 175, 55, 0.2); box-shadow: 0 0 15px var(--gold); transition: 0.5s; }
 
-        #qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
-        #qrcode-canvas { background: white; padding: 20px; border-radius: 12px; }
+        /* リザルト */
+        #result-panel {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); border: 2px solid var(--gold); padding: 25px;
+            border-radius: 20px; z-index: 1000; width: 85%; max-width: 300px;
+            display: none; flex-direction: column; align-items: center;
+        }
+        #result-winner-name { color: var(--gold); font-size: 32px; margin-bottom: 5px; }
+
+        .mini-card { width: 18px !important; height: 28px !important; font-size: 8px !important; }
+        .area-label { font-size: 9px; color: var(--gold); letter-spacing: 2px; margin-top: 15px; font-weight: bold; }
+        
+        #qrcode-canvas { background: white; padding: 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
+    <button class="btn-home" onclick="location.href=location.pathname">ホームに戻る</button>
+
     <!-- 1. 初期画面 -->
     <div id="choice-screen" class="screen active">
-        <h1 style="margin-top:60px; font-size: 32px; letter-spacing: 2px;">POKER ENGINE</h1>
-        <button onclick="goParentAuth()">親（ディーラー）</button>
-        <button onclick="goChildScanner()">子（プレイヤー）</button>
+        <h1>Texas Hold'em</h1>
+        <button onclick="startBotMode()" class="btn-main">Botと対戦 (1 vs 5)</button>
+        <button onclick="goParentAuth()">ディーラー(親)を開始</button>
+        <button onclick="goChildScanner()">プレイヤー(子)で参加</button>
+        <p style="font-size:11px; opacity:0.6; margin-top:30px;">チップ各20枚所持 ($1,820)</p>
     </div>
 
     <!-- 2. 親認証 -->
     <div id="parent-auth-screen" class="screen">
-        <h2>Enter Dealer Password</h2>
-        <input type="password" id="pass-input" placeholder="パスワードを入力">
-        <button onclick="checkParentPass()">ログイン</button>
-        <button onclick="location.reload()" class="btn-red">キャンセル</button>
+        <h2>DEALER LOGIN</h2>
+        <input type="password" id="pass-input" placeholder="Password" style="padding:12px; border-radius:8px; border:none; width:200px; text-align:center;">
+        <button onclick="checkParentPass()" class="btn-main" style="margin-top:20px;">Login</button>
     </div>
 
-    <!-- 3. 親メイン -->
+    <!-- 3. 親パネル (ディーラー用) -->
     <div id="parent-main-screen" class="screen">
-        <div class="slots-container">
-            <div id="slot-0" class="slot" onclick="showQR(0)"><span>P1</span><small>WAITING</small></div>
-            <div id="slot-1" class="slot" onclick="showQR(1)"><span>P2</span><small>WAITING</small></div>
-            <div id="slot-2" class="slot" onclick="showQR(2)"><span>P3</span><small>WAITING</small></div>
+        <h2 style="color:var(--gold)">DEALER PANEL</h2>
+        <div class="pot-area">POT: $<span id="p-pot-val">0</span></div>
+        <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom: 20px;">
+            <button onclick="showQR(0)" style="width:85px; font-size:10px;">P1 QR</button>
+            <button onclick="showQR(1)" style="width:85px; font-size:10px;">P2 QR</button>
+            <button onclick="showQR(2)" style="width:85px; font-size:10px;">P3 QR</button>
         </div>
-
-        <div style="width: 100%; max-width: 400px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px;">
-            <div class="area-label">Step 1: 手札配布</div>
-            <button onclick="dealAllHole()" class="btn-blue">2枚ずつ配る</button>
-
-            <div class="area-label">Step 2: 場に出す</div>
-            <button id="btn-flop" onclick="dealFlop()" class="btn-orange">FLOP (3枚出す)</button>
-            <button id="btn-reveal" onclick="revealOne()" class="btn-orange" style="display:none;">1枚ずつめくる</button>
-            <button id="btn-turn" onclick="dealNext()" class="btn-orange" style="display:none;">次を追加 (裏向き)</button>
-        </div>
-
-        <button onclick="resetGame()" class="btn-red" style="margin-top:30px;">全データをリセット</button>
+        <button onclick="dealAllHole()" class="btn-main">全員に2枚配る</button>
+        <button id="p-btn-flop" onclick="dealFlop()">FLOP (場に3枚出す)</button>
+        <button id="p-btn-rev" onclick="revealOne()" style="display:none;">場を1枚めくる</button>
+        <button id="p-btn-next" onclick="dealNext()" style="display:none;">次の1枚を追加</button>
+        
+        <button onclick="resetGame()" style="border-color:red; color:red; margin-top:50px; width: 140px; font-size: 11px;">Table Reset</button>
     </div>
 
     <!-- 4. 子スキャナー -->
     <div id="child-scan-screen" class="screen">
-        <h2>QRスキャン</h2>
-        <div id="reader" style="width: 300px; border-radius: 15px; overflow: hidden;"></div>
-        <button onclick="location.reload()" class="btn-red" style="margin-top:20px;">戻る</button>
+        <h2>Scan Dealer QR</h2>
+        <div id="reader" style="width:280px; border-radius:15px; overflow:hidden; background:white;"></div>
     </div>
 
-    <!-- 5. 子ゲーム -->
-    <div id="child-main-screen" class="screen">
-        <div id="hand-rank">準備完了</div>
-        <div class="area-label">Your Hand</div>
-        <div id="hole-cards" class="card-row"></div>
-        <div class="area-label">Community Cards</div>
-        <div id="community-cards" class="card-row"></div>
+    <!-- 5. メインプレイ画面 (オンライン・Bot共通) -->
+    <div id="play-screen" class="screen">
+        <div id="bots-area" class="bots-grid" style="display:none;">
+            <div id="bot-0" class="bot-player">BOT 1<div class="mini-hand" style="display:flex; justify-content:center; gap:2px; margin-top:3px;"></div></div>
+            <div id="bot-1" class="bot-player">BOT 2<div class="mini-hand" style="display:flex; justify-content:center; gap:2px; margin-top:3px;"></div></div>
+            <div id="bot-2" class="bot-player">BOT 3<div class="mini-hand" style="display:flex; justify-content:center; gap:2px; margin-top:3px;"></div></div>
+            <div id="bot-3" class="bot-player">BOT 4<div class="mini-hand" style="display:flex; justify-content:center; gap:2px; margin-top:3px;"></div></div>
+            <div id="bot-4" class="bot-player">BOT 5<div class="mini-hand" style="display:flex; justify-content:center; gap:2px; margin-top:3px;"></div></div>
+        </div>
+
+        <div class="pot-area">POT: $<span id="pot-amount">0</span></div>
+        <div id="hand-rank" style="color:var(--gold); font-size:20px; height: 30px; font-weight: bold; text-shadow: 1px 1px 3px black;">-</div>
+
+        <div class="area-label">COMMUNITY CARDS</div>
+        <div id="community-cards" style="display:flex; gap:8px; min-height:80px; justify-content:center;"></div>
+
+        <div class="area-label">YOUR HAND</div>
+        <div id="hole-cards" style="display:flex; gap:10px; min-height:80px; justify-content:center;"></div>
+
+        <div class="area-label">BET CHIPS</div>
+        <div class="chip-container">
+            <div class="chip" style="background:var(--chip-1);" onclick="placeBet(1)">$1<span id="c-1">20</span></div>
+            <div class="chip" style="background:var(--chip-5);" onclick="placeBet(5)">$5<span id="c-5">20</span></div>
+            <div class="chip" style="background:var(--chip-10);" onclick="placeBet(10)">$10<span id="c-10">20</span></div>
+            <div class="chip" style="background:var(--chip-25);" onclick="placeBet(25)">$25<span id="c-25">20</span></div>
+            <div class="chip" style="background:var(--chip-50);" onclick="placeBet(50)">$50<span id="c-50">20</span></div>
+        </div>
+
+        <div id="bot-controls" style="display:none; margin-top:20px; width:100%;">
+            <button id="action-btn" onclick="botNextStep()" class="btn-main">次へ進む</button>
+        </div>
+    </div>
+
+    <!-- リザルト画面 -->
+    <div id="result-panel">
+        <div style="font-size: 11px; color: var(--gold); letter-spacing: 2px;">ROUND WINNER</div>
+        <div id="result-winner-name">-</div>
+        <div id="result-hand-name" style="margin-bottom:20px; opacity:0.8;">-</div>
+        <button onclick="startBotMode()" class="btn-main" style="width: 100%;">NEXT GAME</button>
     </div>
 
     <!-- QRモーダル -->
-    <div id="qr-modal" onclick="this.style.display='none'">
+    <div id="qr-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:200; flex-direction:column; align-items:center; justify-content:center;" onclick="this.style.display='none'">
         <div id="qrcode-canvas"></div>
-        <p style="margin-top:20px;">プレイヤーに読み取らせてください</p>
+        <p style="margin-top:20px; font-size:12px;">プレイヤーにスキャンさせてください</p>
     </div>
 
     <script>
-        let peer = new Peer();
-        let myId = "";
-        let connections = [null, null, null];
-        let deck = [];
-        let p_comm = [];
-        let p_rev = 0;
-
-        let c_hole = [], c_comm = [], c_rev = 0;
+        // --- 共通変数 ---
+        let peer = new Peer(), myId = "", connections = [null,null,null], deck = [];
+        let p_comm = [], p_rev = 0, p_pot = 0;
+        let c_hole = [], c_comm = [], c_rev = 0, c_pot = 0;
+        let myChips = { 1:20, 5:20, 10:20, 25:20, 50:20 };
+        let isBot = false, botHoles = [], botStep = 0;
 
         peer.on('open', (id) => { myId = id; checkAutoJoin(); });
 
+        // --- 画面切り替え ---
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            document.getElementById('result-panel').style.display = 'none';
         }
 
         // --- 親認証 ---
-        function goParentAuth() { 
-            document.getElementById('pass-input').value = ""; // 念のため空にする
-            showScreen('parent-auth-screen'); 
+        function goParentAuth() {
+            document.getElementById('pass-input').value = "";
+            showScreen('parent-auth-screen');
         }
         function checkParentPass() {
-            if (document.getElementById('pass-input').value === "1231") startParent();
-            else alert("パスワードが違います");
+            if(document.getElementById('pass-input').value === "1231") {
+                startParentPanel();
+            } else {
+                alert("Incorrect Password");
+            }
         }
 
-        function startParent() {
+        function startParentPanel() {
             showScreen('parent-main-screen');
             deck = createSecureDeck();
             peer.on('connection', (conn) => {
                 conn.on('open', () => {
-                    const idx = conn.metadata.slot;
-                    connections[idx] = conn;
-                    const el = document.getElementById(`slot-${idx}`);
-                    el.classList.add('connected');
-                    el.querySelector('small').innerText = "READY";
+                    const slot = conn.metadata.slot;
+                    connections[slot] = conn;
+                    // 子からのチップ送信を受け取る
+                    conn.on('data', (data) => {
+                        if(data.type === 'BET') {
+                            p_pot += data.val;
+                            syncToPlayers();
+                        }
+                    });
                 });
             });
         }
 
-        // --- 暗号学的シャッフル (Crypto API) ---
+        // --- 山札作成 (暗号学的シャッフル) ---
         function createSecureDeck() {
-            const suits = ['♠', '♥', '♦', '♣'];
-            const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+            const suits = ['♠','♥','♦','♣'], vals = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
             let d = [];
-            for(let s of suits) for(let v of values) d.push({v, s, c: (s==='♥'||s==='♦')?'suit-red':''});
-            
-            // 暗号強度の高い乱数によるシャッフル
-            for (let i = d.length - 1; i > 0; i--) {
-                const array = new Uint32Array(1);
-                window.crypto.getRandomValues(array);
-                const j = array[0] % (i + 1);
-                [d[i], d[j]] = [d[j], d[i]];
+            for(let s of suits) for(let v of vals) d.push({v, s, c:(s==='♥'||s==='♦')?'suit-red':''});
+            for(let i=d.length-1; i>0; i--) {
+                const j = Math.floor(window.crypto.getRandomValues(new Uint32Array(1))[0] % (i+1));
+                [d[i],d[j]] = [d[j],d[i]];
             }
             return d;
         }
 
-        function showQR(idx) {
-            const canvas = document.getElementById('qrcode-canvas');
-            canvas.innerHTML = "";
-            const joinUrl = `${window.location.origin}${window.location.pathname}?p=${myId}&s=${idx}`;
-            new QRCode(canvas, { text: joinUrl, width: 220, height: 220 });
-            document.getElementById('qr-modal').style.display = 'flex';
-        }
-
+        // --- 親の操作関数 ---
         function dealAllHole() {
-            connections.forEach(conn => {
-                if(conn) {
-                    const cards = [deck.shift(), deck.shift()];
-                    conn.send({ type: 'HOLE', cards: cards });
-                }
+            connections.forEach((c, idx) => {
+                if(c) c.send({type:'HOLE', cards:[deck.shift(), deck.shift()]});
             });
         }
 
         function dealFlop() {
             p_comm = [deck.shift(), deck.shift(), deck.shift()];
             p_rev = 0;
-            sync();
-            document.getElementById('btn-flop').style.display = 'none';
-            document.getElementById('btn-reveal').style.display = 'inline-block';
+            syncToPlayers();
+            document.getElementById('p-btn-flop').style.display = 'none';
+            document.getElementById('p-btn-rev').style.display = 'inline-block';
         }
 
         function revealOne() {
-            if (p_rev < p_comm.length) { p_rev++; sync(); }
-            if (p_rev >= p_comm.length) {
-                document.getElementById('btn-reveal').style.display = 'none';
-                if (p_comm.length < 5) document.getElementById('btn-turn').style.display = 'inline-block';
+            if(p_rev < p_comm.length) {
+                p_rev++;
+                syncToPlayers();
+            }
+            if(p_rev >= p_comm.length) {
+                document.getElementById('p-btn-rev').style.display = 'none';
+                if(p_comm.length < 5) document.getElementById('p-btn-next').style.display = 'inline-block';
             }
         }
 
         function dealNext() {
             p_comm.push(deck.shift());
-            sync();
-            document.getElementById('btn-turn').style.display = 'none';
-            document.getElementById('btn-reveal').style.display = 'inline-block';
+            syncToPlayers();
+            document.getElementById('p-btn-next').style.display = 'none';
+            document.getElementById('p-btn-rev').style.display = 'inline-block';
         }
 
-        function sync() {
-            connections.forEach(conn => { if(conn) conn.send({ type: 'COMM', cards: p_comm, rev: p_rev }); });
+        function syncToPlayers() {
+            document.getElementById('p-pot-val').innerText = p_pot;
+            connections.forEach(c => {
+                if(c) c.send({type:'COMM', cards:p_comm, rev:p_rev, pot:p_pot});
+            });
         }
 
         function resetGame() {
+            p_comm = []; p_rev = 0; p_pot = 0;
             deck = createSecureDeck();
-            p_comm = []; p_rev = 0;
-            connections.forEach(conn => { if(conn) conn.send({ type: 'RESET' }); });
-            document.getElementById('btn-flop').style.display = 'inline-block';
-            document.getElementById('btn-reveal').style.display = 'none';
-            document.getElementById('btn-turn').style.display = 'none';
+            syncToPlayers();
+            connections.forEach(c => c && c.send({type:'RESET'}));
+            document.getElementById('p-btn-flop').style.display = 'inline-block';
+            document.getElementById('p-btn-rev').style.display = 'none';
+            document.getElementById('p-btn-next').style.display = 'none';
         }
 
-        // --- 子ロジック ---
+        // --- 子の操作 ---
         function goChildScanner() {
             showScreen('child-scan-screen');
             const scanner = new Html5Qrcode("reader");
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+            scanner.start({facingMode:"environment"}, {fps:10, qrbox:250}, (text) => {
                 scanner.stop();
-                window.location.href = text;
+                location.href = text;
             });
         }
 
         function checkAutoJoin() {
             const params = new URLSearchParams(window.location.search);
-            if (params.get('p')) {
+            if(params.get('p')) {
+                showScreen('play-screen');
                 const parentId = params.get('p');
                 const slot = params.get('s');
-                showScreen('child-main-screen');
-                const conn = peer.connect(parentId, { metadata: { slot: parseInt(slot) } });
-                conn.on('data', (data) => {
-                    if (data.type === 'HOLE') { c_hole = data.cards; renderHole(); }
-                    if (data.type === 'COMM') { c_comm = data.cards; c_rev = data.rev; renderComm(); }
-                    if (data.type === 'RESET') { c_hole = []; c_comm = []; c_rev = 0; renderHole(); renderComm(); }
-                    updateRank();
+                const conn = peer.connect(parentId, {metadata:{slot:parseInt(slot)}});
+                window.activeConn = conn;
+                conn.on('data', (d) => {
+                    if(d.type==='HOLE') c_hole = d.cards;
+                    if(d.type==='COMM') { c_comm = d.cards; c_rev = d.rev; c_pot = d.pot; }
+                    if(d.type==='RESET') { c_hole = []; c_comm = []; c_rev = 0; c_pot = 0; }
+                    renderUI();
                 });
             }
         }
 
-        function renderHole() {
-            const area = document.getElementById('hole-cards');
-            area.innerHTML = "";
-            c_hole.forEach(c => {
-                const div = document.createElement('div');
-                div.className = `card ${c.c}`;
-                div.innerHTML = `<div>${c.s}</div><div>${c.v}</div>`;
-                area.appendChild(div);
-            });
-        }
-
-        function renderComm() {
-            const area = document.getElementById('community-cards');
-            area.innerHTML = "";
-            c_comm.forEach((c, i) => {
-                const div = document.createElement('div');
-                if (i < c_rev) {
-                    div.className = `card ${c.c}`;
-                    div.innerHTML = `<div>${c.s}</div><div>${c.v}</div>`;
-                } else {
-                    div.className = `card back`;
+        function placeBet(val) {
+            if(myChips[val] > 0) {
+                myChips[val]--;
+                document.getElementById(`c-${val}`).innerText = myChips[val];
+                if(isBot) {
+                    c_pot += (val * 6); // 自分とBot5人分
+                } else if(window.activeConn) {
+                    window.activeConn.send({type:'BET', val: val});
                 }
-                area.appendChild(div);
-            });
-        }
-
-        function updateRank() {
-            const display = document.getElementById('hand-rank');
-            if (c_hole.length < 2) { display.innerText = "WAITING..."; return; }
-            const vis = c_comm.slice(0, c_rev);
-            const all = [...c_hole, ...vis];
-            if (all.length < 5) { display.innerText = "CHECKING..."; return; }
-            display.innerText = judge(all);
-        }
-
-        function judge(cards) {
-            const valMap = { '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14 };
-            const suits = cards.map(c => c.s);
-            const values = cards.map(c => valMap[c.v]).sort((a,b) => b-a);
-            const counts = {}; values.forEach(v => counts[v] = (counts[v] || 0) + 1);
-            const cArr = Object.values(counts).sort((a,b) => b-a);
-            const sCounts = {}; suits.forEach(s => sCounts[s] = (sCounts[s] || 0) + 1);
-            const isF = Object.values(sCounts).some(c => c >= 5);
-            const uni = [...new Set(values)];
-            if (uni.includes(14)) uni.push(1);
-            uni.sort((a,b) => b-a);
-            let isS = false;
-            for (let i=0; i <= uni.length - 5; i++) { if (uni[i] - uni[i+4] === 4) { isS = true; break; } }
-            if (isF && isS) {
-                const fs = Object.keys(sCounts).find(s => sCounts[s] >= 5);
-                const fv = cards.filter(c => c.s === fs).map(c => valMap[c.v]);
-                if ([14,13,12,11,10].every(v => fv.includes(v))) return "ロイヤルフラッシュ";
-                return "ストレートフラッシュ";
+                renderUI();
             }
-            if (cArr[0] === 4) return "フォーカード";
-            if (cArr[0] === 3 && cArr[1] >= 2) return "フルハウス";
-            if (isF) return "フラッシュ";
-            if (isS) return "ストレート";
-            if (cArr[0] === 3) return "スリーカード";
-            if (cArr[1] === 2) return "ツーペア";
-            if (cArr[0] === 2) return "ワンペア";
+        }
+
+        // --- Botモード ---
+        function startBotMode() {
+            isBot = true; botStep = 0; deck = createSecureDeck(); c_pot = 0;
+            c_hole = [deck.shift(), deck.shift()];
+            botHoles = [];
+            for(let i=0; i<5; i++) botHoles.push([deck.shift(), deck.shift()]);
+            c_comm = []; c_rev = 0;
+            showScreen('play-screen');
+            document.getElementById('bots-area').style.display = 'grid';
+            document.getElementById('bot-controls').style.display = 'block';
+            document.getElementById('action-btn').style.display = 'inline-block';
+            document.querySelectorAll('.bot-player').forEach(el => el.classList.remove('winner-highlight'));
+            renderUI();
+        }
+
+        function botNextStep() {
+            botStep++;
+            if(botStep===1) { c_comm = [deck.shift(), deck.shift(), deck.shift()]; c_rev = 3; }
+            else if(botStep===2) { c_comm.push(deck.shift()); c_rev = 4; }
+            else if(botStep===3) { c_comm.push(deck.shift()); c_rev = 5; }
+            else if(botStep===4) {
+                const res = [{n:"YOU", r:judge([...c_hole,...c_comm]), v:rv(judge([...c_hole,...c_comm]))}];
+                botHoles.forEach((h,i)=>res.push({n:`BOT ${i+1}`, r:judge([...h,...c_comm]), v:rv(judge([...h,...c_comm])), id:`bot-${i}`}));
+                res.sort((a,b)=>b.v-a.v);
+                
+                document.getElementById('result-winner-name').innerText = res[0].n;
+                document.getElementById('result-hand-name').innerText = res[0].r;
+                document.getElementById('result-panel').style.display = 'flex';
+                if(res[0].id) document.getElementById(res[0].id).classList.add('winner-highlight');
+                document.getElementById('action-btn').style.display = 'none';
+            }
+            renderUI();
+        }
+
+        // --- UI描画 ---
+        function renderUI() {
+            const hA = document.getElementById('hole-cards'), cA = document.getElementById('community-cards');
+            hA.innerHTML = ""; cA.innerHTML = "";
+            c_hole.forEach(c => hA.appendChild(createCardUI(c)));
+            c_comm.forEach((c,i) => cA.appendChild(createCardUI(c, i < c_rev)));
+            document.getElementById('pot-amount').innerText = c_pot;
+            
+            if(isBot) {
+                botHoles.forEach((h,i)=>{
+                    const bA = document.querySelector(`#bot-${i} .mini-hand`); bA.innerHTML="";
+                    h.forEach(c => bA.appendChild(createCardUI(c, botStep>=4, true)));
+                });
+            }
+            const rank = document.getElementById('hand-rank');
+            if(c_hole.length === 2) rank.innerText = (c_rev>=3) ? judge([...c_hole,...c_comm.slice(0,c_rev)]) : "Wait for Cards...";
+        }
+
+        function createCardUI(c, up=true, mini=false) {
+            const d = document.createElement('div');
+            d.className = up ? `card ${c.c}` : "card back";
+            if(mini) d.classList.add('mini-card');
+            if(up) d.innerHTML = `<div>${c.s}</div><div>${c.v}</div>`;
+            return d;
+        }
+
+        function showQR(idx) {
+            const canvas = document.getElementById('qrcode-canvas'); canvas.innerHTML = "";
+            const url = `${window.location.origin}${window.location.pathname}?p=${myId}&s=${idx}`;
+            new QRCode(canvas, {text: url, width:200, height:200});
+            document.getElementById('qr-modal').style.display = 'flex';
+        }
+
+        // --- 役判定 ---
+        function rv(r) { return ["ハイカード","ワンペア","ツーペア","スリーカード","ストレート","フラッシュ","フルハウス","フォーカード","ストレートフラッシュ","ロイヤルフラッシュ"].indexOf(r); }
+        function judge(cards) {
+            const valMap = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14};
+            const v = cards.map(c=>valMap[c.v]).sort((a,b)=>b-a);
+            const s = cards.map(c=>c.s);
+            const counts = {}; v.forEach(x=>counts[x]=(counts[x]||0)+1);
+            const cArr = Object.values(counts).sort((a,b)=>b-a);
+            const sCounts = {}; s.forEach(x=>sCounts[x]=(sCounts[x]||0)+1);
+            const isF = Object.values(sCounts).some(x=>x>=5);
+            const uni = [...new Set(v)]; if(uni.includes(14)) uni.push(1); uni.sort((a,b)=>b-a);
+            let isS = false; for(let i=0;i<=uni.length-5;i++) if(uni[i]-uni[i+4]===4){isS=true; break;}
+            if(isF && isS) return "ストレートフラッシュ";
+            if(cArr[0]===4) return "フォーカード";
+            if(cArr[0]===3 && cArr[1]>=2) return "フルハウス";
+            if(isF) return "フラッシュ";
+            if(isS) return "ストレート";
+            if(cArr[0]===3) return "スリーカード";
+            if(cArr[0]===2 && cArr[1]===2) return "ツーペア";
+            if(cArr[0]===2) return "ワンペア";
             return "ハイカード";
         }
     </script>
