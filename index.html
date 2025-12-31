@@ -3,219 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>テキサスホールデム・ディーラー</title>
-    <!-- ライブラリ -->
+    <title>ポーカー・ディーラー Pro</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --poker-green: #1a472a; --card-red: #c0392b; }
+        :root { --poker-green: #1a472a; --accent: #f1c40f; }
         body { font-family: sans-serif; background: var(--poker-green); color: white; margin: 0; text-align: center; }
-        .screen { display: none; padding: 20px; min-height: 100vh; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; }
+        .screen { display: none; padding: 20px; min-height: 100vh; box-sizing: border-box; flex-direction: column; align-items: center; }
         .active { display: flex; }
         
-        button { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 10px; border: none; background: #27ae60; color: white; margin: 10px; width: 80%; max-width: 300px; }
-        input { padding: 12px; font-size: 18px; border-radius: 10px; border: none; width: 80%; max-width: 300px; margin-bottom: 20px; text-align: center; }
+        button { padding: 15px; font-size: 18px; cursor: pointer; border-radius: 10px; border: none; background: #27ae60; color: white; margin: 10px; width: 250px; }
+        input { padding: 12px; font-size: 18px; border-radius: 10px; border: none; width: 250px; margin-bottom: 20px; text-align: center; color: black; }
 
-        /* カードデザイン */
-        .card { width: 80px; height: 120px; background: white; border-radius: 8px; color: black; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
-        .card.back { background: var(--card-red); border: 4px solid white; }
+        .card { width: 80px; height: 120px; background: white; border-radius: 8px; color: black; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5); margin: 5px; }
+        .card.back { background: #c0392b; border: 4px solid white; color: white; }
         .suit-red { color: #e74c3c; }
 
-        /* QRモーダル */
         #qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
         #qrcode-canvas { background: white; padding: 20px; border-radius: 10px; }
-
-        /* スキャナー */
-        #reader { width: 300px; background: white; margin: 20px auto; }
-
-        /* 手札 */
-        #hand-display { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+        #reader { width: 300px; background: white; }
+        .status-badge { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; font-size: 12px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <!-- 1. 役割選択画面 -->
+    <!-- 1. 初期選択画面 -->
     <div id="choice-screen" class="screen active">
-        <h1>テキサスホールデム</h1>
-        <button onclick="goParentAuth()">親（ディーラー）</button>
-        <button onclick="goChildScanner()">子（プレイヤー）</button>
+        <h1>Poker Dealer</h1>
+        <div class="status-badge" id="peer-id-status">通信準備中...</div>
+        <button onclick="goParentAuth()">親（ディーラー）を始める</button>
+        <button onclick="goChildScanner()">子（プレイヤー）として参加</button>
     </div>
 
     <!-- 2. 親：認証画面 -->
     <div id="parent-auth-screen" class="screen">
-        <h2>親用ログイン</h2>
-        <input type="password" id="pass-input" placeholder="パスワードを入力">
+        <h2>親：パスワード入力</h2>
+        <input type="tel" id="pass-input" placeholder="Password: 1231">
         <button onclick="checkParentPass()">ログイン</button>
-        <button onclick="backToMain()" style="background:#95a5a6">戻る</button>
+        <button onclick="location.reload()" style="background:#7f8c8d">戻る</button>
     </div>
 
     <!-- 3. 親：メイン画面 -->
     <div id="parent-main-screen" class="screen">
-        <h3>ディーラー操作パネル</h3>
-        <p>山札からスワイプ（クリック）して配布</p>
-        <div class="card back"></div>
+        <h2>ディーラーパネル</h2>
+        <div class="card back">Deck</div>
+        <div id="parent-log" style="font-size: 12px; color: #f1c40f;"></div>
         
-        <div style="margin-top: 30px; width: 100%;">
-            <div id="player-controls">
-                <!-- 子1 -->
-                <div style="border: 1px solid rgba(255,255,255,0.3); margin: 5px; padding: 10px;">
-                    <button id="qr-btn-0" onclick="showQR(0)">子1：QR表示</button>
-                    <button id="deal-btn-0" onclick="dealTo(0)" style="background:#2980b9; display:none;">子1へ配る</button>
-                </div>
-                <!-- 子2 -->
-                <div style="border: 1px solid rgba(255,255,255,0.3); margin: 5px; padding: 10px;">
-                    <button id="qr-btn-1" onclick="showQR(1)">子2：QR表示</button>
-                    <button id="deal-btn-1" onclick="dealTo(1)" style="background:#2980b9; display:none;">子2へ配る</button>
-                </div>
-                <!-- 子3 -->
-                <div style="border: 1px solid rgba(255,255,255,0.3); margin: 5px; padding: 10px;">
-                    <button id="qr-btn-2" onclick="showQR(2)">子3：QR表示</button>
-                    <button id="deal-btn-2" onclick="dealTo(2)" style="background:#2980b9; display:none;">子3へ配る</button>
-                </div>
+        <div id="player-list" style="width: 100%; margin-top: 20px;">
+            <div id="slot-0" style="background:rgba(255,255,255,0.1); margin:10px; padding:10px; border-radius:10px;">
+                <span>子1: 未接続</span><br>
+                <button onclick="showQR(0)">QR表示</button>
+                <button id="deal-0" onclick="dealTo(0)" style="display:none; background:#2980b9">カードを配る</button>
+            </div>
+            <div id="slot-1" style="background:rgba(255,255,255,0.1); margin:10px; padding:10px; border-radius:10px;">
+                <span>子2: 未接続</span><br>
+                <button onclick="showQR(1)">QR表示</button>
+                <button id="deal-1" onclick="dealTo(1)" style="display:none; background:#2980b9">カードを配る</button>
+            </div>
+            <div id="slot-2" style="background:rgba(255,255,255,0.1); margin:10px; padding:10px; border-radius:10px;">
+                <span>子3: 未接続</span><br>
+                <button onclick="showQR(2)">QR表示</button>
+                <button id="deal-2" onclick="dealTo(2)" style="display:none; background:#2980b9">カードを配る</button>
             </div>
         </div>
     </div>
 
     <!-- 4. 子：スキャナー画面 -->
     <div id="child-scan-screen" class="screen">
-        <h2>QRコードをスキャン</h2>
+        <h2>QRをスキャンしてください</h2>
         <div id="reader"></div>
-        <button onclick="backToMain()" style="background:#95a5a6">キャンセル</button>
+        <button onclick="location.reload()" style="background:#7f8c8d">キャンセル</button>
     </div>
 
     <!-- 5. 子：ゲーム画面 -->
     <div id="child-main-screen" class="screen">
-        <h2 id="child-title">接続中...</h2>
-        <div id="hand-display"></div>
+        <h2 id="child-status-text">親に接続しています...</h2>
+        <div id="hand-display" style="display: flex; gap: 10px; justify-content: center;"></div>
+        <div id="connection-log" style="font-size: 12px; margin-top: 20px;"></div>
     </div>
 
     <!-- QR表示モーダル -->
-    <div id="qr-modal" onclick="closeQR()">
+    <div id="qr-modal" onclick="this.style.display='none'">
         <div id="qrcode-canvas"></div>
-        <p style="color:white; margin-top:10px;">タップで閉じる</p>
+        <p>子に読み取らせてください<br>(タップで閉じる)</p>
     </div>
 
     <script>
         let peer = new Peer();
         let myId = "";
-        let connections = [null, null, null]; // 子1, 2, 3 の接続
+        let connections = [null, null, null];
         let deck = [];
 
-        // --- 画面切り替え ---
+        // PeerJSの起動確認
+        peer.on('open', (id) => {
+            myId = id;
+            document.getElementById('peer-id-status').innerText = "通信準備完了";
+            // URLパラメータがあれば子として自動接続
+            checkAutoJoin();
+        });
+
+        // --- 画面遷移 ---
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
-        function backToMain() { showScreen('choice-screen'); }
-
-        // --- 親：認証 ---
+        // --- 親の処理 ---
         function goParentAuth() { showScreen('parent-auth-screen'); }
 
         function checkParentPass() {
             if (document.getElementById('pass-input').value === "1231") {
                 startParent();
-            } else {
-                alert("パスワードが違います");
-            }
+            } else { alert("パスワードが違います"); }
         }
 
         function startParent() {
             showScreen('parent-main-screen');
             deck = createDeck();
-            peer.on('open', (id) => { myId = id; });
             
             peer.on('connection', (conn) => {
-                // 接続時に送られてくるメタデータ（playerIndex）を確認
                 conn.on('open', () => {
-                    const idx = conn.metadata.playerIndex;
-                    connections[idx] = conn;
-                    document.getElementById(`qr-btn-${idx}`).style.display = 'none';
-                    document.getElementById(`deal-btn-${idx}`).style.display = 'inline-block';
-                    document.getElementById(`deal-btn-${idx}`).innerText = `子${idx+1}へ配る (接続中)`;
+                    const slotIdx = conn.metadata.slot;
+                    connections[slotIdx] = conn;
+                    const slotEl = document.getElementById(`slot-${slotIdx}`);
+                    slotEl.querySelector('span').innerText = `子${slotIdx + 1}: 接続済み ✅`;
+                    slotEl.querySelector('button').style.display = 'none';
+                    document.getElementById(`deal-${slotIdx}`).style.display = 'inline-block';
+                    document.getElementById('parent-log').innerText = `子${slotIdx + 1}が参加しました`;
                 });
             });
         }
 
-        // QR表示
-        function showQR(idx) {
-            const modal = document.getElementById('qr-modal');
+        function showQR(slotIdx) {
             const canvas = document.getElementById('qrcode-canvas');
             canvas.innerHTML = "";
-            const joinUrl = `${window.location.origin}${window.location.pathname}?parent=${myId}&slot=${idx}`;
+            const joinUrl = `${window.location.origin}${window.location.pathname}?p=${myId}&s=${slotIdx}`;
             new QRCode(canvas, { text: joinUrl, width: 200, height: 200 });
-            modal.style.display = 'flex';
-        }
-
-        function closeQR() { document.getElementById('qr-modal').style.display = 'none'; }
-
-        // 配布（親にはカードが見えない）
-        function dealTo(idx) {
-            if (connections[idx] && deck.length > 0) {
-                const card = deck.shift();
-                connections[idx].send({ type: 'DEAL', card: card });
-            }
+            document.getElementById('qr-modal').style.display = 'flex';
         }
 
         function createDeck() {
             const suits = ['♠', '♥', '♦', '♣'];
-            const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            const values = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
             let d = [];
-            for (let s of suits) {
-                for (let v of values) {
-                    d.push({ suit: s, value: v, color: (s === '♥' || s === '♦') ? 'suit-red' : '' });
-                }
-            }
+            for(let s of suits) for(let v of values) d.push({s, v, c: (s==='♥'||s==='♦')?'suit-red':''});
             return d.sort(() => Math.random() - 0.5);
         }
 
-        // --- 子：スキャン & ゲーム ---
-        function goChildScanner() {
-            showScreen('child-scan-screen');
-            const html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: 250 },
-                (decodedText) => {
-                    html5QrCode.stop();
-                    connectToParent(decodedText);
-                }
-            );
+        function dealTo(idx) {
+            if (connections[idx] && deck.length > 0) {
+                const card = deck.shift();
+                connections[idx].send({ type: 'CARD', card: card });
+            }
         }
 
-        function connectToParent(urlText) {
-            const url = new URL(urlText);
-            const parentId = url.searchParams.get('parent');
-            const slot = url.searchParams.get('slot');
-
-            showScreen('child-main-screen');
-            document.getElementById('child-title').innerText = `子${parseInt(slot)+1}として参加中`;
-
-            const conn = peer.connect(parentId, { metadata: { playerIndex: parseInt(slot) } });
-            conn.on('data', (data) => {
-                if (data.type === 'DEAL') {
-                    renderCard(data.card);
-                }
+        // --- 子の処理 ---
+        function goChildScanner() {
+            showScreen('child-scan-screen');
+            const scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+                scanner.stop();
+                window.location.href = text; // QRの内容(URL)へリダイレクト
             });
         }
 
-        function renderCard(card) {
-            const hand = document.getElementById('hand-display');
-            const el = document.createElement('div');
-            el.className = `card ${card.color}`;
-            el.innerHTML = `<div>${card.value}<br>${card.suit}</div>`;
-            hand.appendChild(el);
+        function checkAutoJoin() {
+            const params = new URLSearchParams(window.location.search);
+            const parentId = params.get('p');
+            const slot = params.get('s');
+
+            if (parentId && slot !== null) {
+                showScreen('child-main-screen');
+                connectToParent(parentId, slot);
+            }
         }
 
-        // URLにパラメータがある場合の自動処理（QRスキャン後用）
-        window.onload = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('parent')) {
-                connectToParent(window.location.href);
-            }
-        };
+        function connectToParent(parentId, slot) {
+            const log = document.getElementById('connection-log');
+            log.innerText = "親に接続を試みています...";
+            
+            const conn = peer.connect(parentId, { metadata: { slot: parseInt(slot) } });
+            
+            conn.on('open', () => {
+                log.innerText = "接続成功！カードを待っています...";
+                document.getElementById('child-status-text').innerText = `子${parseInt(slot)+1} として参加中`;
+            });
 
+            conn.on('data', (data) => {
+                if (data.type === 'CARD') {
+                    const hand = document.getElementById('hand-display');
+                    const c = data.card;
+                    const div = document.createElement('div');
+                    div.className = `card ${c.c}`;
+                    div.innerHTML = `${c.v}<br>${c.s}`;
+                    hand.appendChild(div);
+                }
+            });
+
+            conn.on('error', (err) => {
+                log.innerText = "エラーが発生しました: " + err;
+            });
+        }
     </script>
 </body>
 </html>
