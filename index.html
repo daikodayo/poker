@@ -3,95 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>テキサスホールデム・アルティメット</title>
+    <title>テキサスホールデム・リアル</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --poker-green: #1a472a; --accent: #f1c40f; --card-red: #c0392b; }
-        body { font-family: sans-serif; background: var(--poker-green); color: white; margin: 0; text-align: center; overflow-x: hidden; }
+        :root { --poker-green: #1a472a; --accent: #f1c40f; --card-red: #c0392b; --card-shadow: rgba(0,0,0,0.5); }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--poker-green); color: white; margin: 0; text-align: center; overflow-x: hidden; }
         .screen { display: none; padding: 15px; min-height: 100vh; box-sizing: border-box; flex-direction: column; align-items: center; }
         .active { display: flex; }
         
-        button { padding: 12px; font-size: 16px; cursor: pointer; border-radius: 8px; border: none; background: #27ae60; color: white; margin: 5px; width: 90%; max-width: 280px; box-shadow: 0 4px #1e8449; transition: 0.1s; }
-        button:active { transform: translateY(2px); box-shadow: 0 2px #1e8449; }
-        .btn-blue { background: #2980b9; box-shadow: 0 4px #1a5276; }
-        .btn-orange { background: #e67e22; box-shadow: 0 4px #a04000; }
-        .btn-red { background: #c0392b; box-shadow: 0 4px #7b241c; }
-        input { padding: 12px; font-size: 18px; border-radius: 8px; border: 1px solid #ccc; width: 250px; margin-bottom: 20px; text-align: center; color: black; }
+        /* ボタンデザイン */
+        button { padding: 14px; font-size: 16px; cursor: pointer; border-radius: 12px; border: none; background: #27ae60; color: white; margin: 6px; width: 90%; max-width: 300px; box-shadow: 0 5px #1e8449; transition: all 0.1s; font-weight: bold; }
+        button:active { transform: translateY(3px); box-shadow: 0 2px #1e8449; }
+        .btn-blue { background: #2980b9; box-shadow: 0 5px #1a5276; }
+        .btn-orange { background: #e67e22; box-shadow: 0 5px #a04000; }
+        .btn-red { background: #c0392b; box-shadow: 0 5px #7b241c; }
+        
+        input { padding: 15px; font-size: 18px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.3); width: 250px; margin-bottom: 25px; text-align: center; background: rgba(255,255,255,0.9); color: #333; }
 
+        /* カードのリアルなデザイン */
         .card { 
-            width: 60px; height: 90px; background: white; border-radius: 6px; color: black; 
-            display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; 
-            box-shadow: 0 3px 6px rgba(0,0,0,0.4); position: relative;
+            width: 65px; height: 95px; background: white; border-radius: 8px; color: black; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            font-size: 22px; font-weight: bold; box-shadow: 2px 4px 10px var(--card-shadow); 
+            position: relative; border: 1px solid #ddd;
         }
-        .card.back { background: var(--card-red) !important; border: 3px solid white; color: white !important; }
+        .card.back { 
+            background: var(--card-red) !important; border: 4px solid white; color: white !important;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px);
+        }
         .suit-red { color: #e74c3c; }
 
-        .slots-container { display: flex; justify-content: space-around; width: 100%; margin-bottom: 10px; }
-        .slot { width: 70px; height: 70px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.4); font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .slot.connected { border-style: solid; border-color: var(--accent); background: rgba(241,196,15,0.1); }
+        .slots-container { display: flex; justify-content: space-around; width: 100%; margin: 15px 0; }
+        .slot { width: 75px; height: 75px; border-radius: 50%; border: 3px dashed rgba(255,255,255,0.3); font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
+        .slot.connected { border-style: solid; border-color: var(--accent); background: rgba(241,196,15,0.2); box-shadow: 0 0 15px var(--accent); }
 
-        .area-label { font-size: 12px; color: var(--accent); margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; }
-        .card-row { display: flex; gap: 8px; justify-content: center; min-height: 100px; width: 100%; flex-wrap: wrap; }
+        .area-label { font-size: 12px; color: var(--accent); margin: 20px 0 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; }
+        .card-row { display: flex; gap: 10px; justify-content: center; min-height: 110px; width: 100%; flex-wrap: wrap; padding: 10px; }
 
-        #hand-rank { font-size: 22px; font-weight: bold; color: var(--accent); margin: 15px 0; height: 30px; text-shadow: 2px 2px 4px black; }
+        #hand-rank { font-size: 26px; font-weight: bold; color: var(--accent); margin: 20px 0; height: 35px; text-shadow: 2px 2px 5px black; }
 
-        #qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
-        #qrcode-canvas { background: white; padding: 15px; border-radius: 8px; }
+        #qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
+        #qrcode-canvas { background: white; padding: 20px; border-radius: 12px; }
     </style>
 </head>
 <body>
 
+    <!-- 1. 初期画面 -->
     <div id="choice-screen" class="screen active">
-        <h1 style="margin-top:50px;">Texas Hold'em</h1>
+        <h1 style="margin-top:60px; font-size: 32px; letter-spacing: 2px;">POKER ENGINE</h1>
         <button onclick="goParentAuth()">親（ディーラー）</button>
         <button onclick="goChildScanner()">子（プレイヤー）</button>
     </div>
 
+    <!-- 2. 親認証 -->
     <div id="parent-auth-screen" class="screen">
-        <h2>ディーラー認証</h2>
-        <input type="password" id="pass-input" placeholder="パスワード(1231)">
+        <h2>Enter Dealer Password</h2>
+        <input type="password" id="pass-input" placeholder="パスワードを入力">
         <button onclick="checkParentPass()">ログイン</button>
-        <button onclick="location.reload()" class="btn-red">戻る</button>
+        <button onclick="location.reload()" class="btn-red">キャンセル</button>
     </div>
 
+    <!-- 3. 親メイン -->
     <div id="parent-main-screen" class="screen">
         <div class="slots-container">
-            <div id="slot-0" class="slot" onclick="showQR(0)"><span>子1</span><small>未接続</small></div>
-            <div id="slot-1" class="slot" onclick="showQR(1)"><span>子2</span><small>未接続</small></div>
-            <div id="slot-2" class="slot" onclick="showQR(2)"><span>子3</span><small>未接続</small></div>
+            <div id="slot-0" class="slot" onclick="showQR(0)"><span>P1</span><small>WAITING</small></div>
+            <div id="slot-1" class="slot" onclick="showQR(1)"><span>P2</span><small>WAITING</small></div>
+            <div id="slot-2" class="slot" onclick="showQR(2)"><span>P3</span><small>WAITING</small></div>
         </div>
 
-        <div style="width: 100%; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px;">
-            <div class="area-label">Step 1: 全員配布</div>
+        <div style="width: 100%; max-width: 400px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px;">
+            <div class="area-label">Step 1: 手札配布</div>
             <button onclick="dealAllHole()" class="btn-blue">2枚ずつ配る</button>
 
-            <div class="area-label">Step 2: コミュニティ</div>
-            <button id="btn-flop" onclick="dealFlop()" class="btn-orange">場に3枚出す(裏側)</button>
+            <div class="area-label">Step 2: 場に出す</div>
+            <button id="btn-flop" onclick="dealFlop()" class="btn-orange">FLOP (3枚出す)</button>
             <button id="btn-reveal" onclick="revealOne()" class="btn-orange" style="display:none;">1枚ずつめくる</button>
-            <button id="btn-turn" onclick="dealNext()" class="btn-orange" style="display:none;">次を追加(裏側)</button>
+            <button id="btn-turn" onclick="dealNext()" class="btn-orange" style="display:none;">次を追加 (裏向き)</button>
         </div>
 
-        <button onclick="resetGame()" class="btn-red" style="margin-top:20px;">全リセット</button>
+        <button onclick="resetGame()" class="btn-red" style="margin-top:30px;">全データをリセット</button>
     </div>
 
+    <!-- 4. 子スキャナー -->
     <div id="child-scan-screen" class="screen">
         <h2>QRスキャン</h2>
-        <div id="reader" style="width: 300px; background: white;"></div>
+        <div id="reader" style="width: 300px; border-radius: 15px; overflow: hidden;"></div>
+        <button onclick="location.reload()" class="btn-red" style="margin-top:20px;">戻る</button>
     </div>
 
+    <!-- 5. 子ゲーム -->
     <div id="child-main-screen" class="screen">
-        <div id="hand-rank">役を判定中...</div>
+        <div id="hand-rank">準備完了</div>
         <div class="area-label">Your Hand</div>
         <div id="hole-cards" class="card-row"></div>
         <div class="area-label">Community Cards</div>
         <div id="community-cards" class="card-row"></div>
     </div>
 
+    <!-- QRモーダル -->
     <div id="qr-modal" onclick="this.style.display='none'">
         <div id="qrcode-canvas"></div>
-        <p>子に読み取らせてください</p>
+        <p style="margin-top:20px;">プレイヤーに読み取らせてください</p>
     </div>
 
     <script>
@@ -99,12 +113,10 @@
         let myId = "";
         let connections = [null, null, null];
         let deck = [];
-        let p_comm = []; // 親が管理する場のカード
-        let p_revealed = 0; // 何枚表か
+        let p_comm = [];
+        let p_rev = 0;
 
-        let c_hole = []; // 子の手札
-        let c_comm = []; // 子から見た場
-        let c_revealed = 0;
+        let c_hole = [], c_comm = [], c_rev = 0;
 
         peer.on('open', (id) => { myId = id; checkAutoJoin(); });
 
@@ -113,8 +125,11 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // --- 親：認証 ---
-        function goParentAuth() { showScreen('parent-auth-screen'); }
+        // --- 親認証 ---
+        function goParentAuth() { 
+            document.getElementById('pass-input').value = ""; // 念のため空にする
+            showScreen('parent-auth-screen'); 
+        }
         function checkParentPass() {
             if (document.getElementById('pass-input').value === "1231") startParent();
             else alert("パスワードが違います");
@@ -122,27 +137,30 @@
 
         function startParent() {
             showScreen('parent-main-screen');
-            deck = createDeck();
+            deck = createSecureDeck();
             peer.on('connection', (conn) => {
                 conn.on('open', () => {
                     const idx = conn.metadata.slot;
                     connections[idx] = conn;
                     const el = document.getElementById(`slot-${idx}`);
                     el.classList.add('connected');
-                    el.querySelector('small').innerText = "接続中";
+                    el.querySelector('small').innerText = "READY";
                 });
             });
         }
 
-        // フィッシャー・イェーツのシャッフル（最強のランダム）
-        function createDeck() {
+        // --- 暗号学的シャッフル (Crypto API) ---
+        function createSecureDeck() {
             const suits = ['♠', '♥', '♦', '♣'];
             const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
             let d = [];
             for(let s of suits) for(let v of values) d.push({v, s, c: (s==='♥'||s==='♦')?'suit-red':''});
             
+            // 暗号強度の高い乱数によるシャッフル
             for (let i = d.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
+                const array = new Uint32Array(1);
+                window.crypto.getRandomValues(array);
+                const j = array[0] % (i + 1);
                 [d[i], d[j]] = [d[j], d[i]];
             }
             return d;
@@ -152,7 +170,7 @@
             const canvas = document.getElementById('qrcode-canvas');
             canvas.innerHTML = "";
             const joinUrl = `${window.location.origin}${window.location.pathname}?p=${myId}&s=${idx}`;
-            new QRCode(canvas, { text: joinUrl, width: 200, height: 200 });
+            new QRCode(canvas, { text: joinUrl, width: 220, height: 220 });
             document.getElementById('qr-modal').style.display = 'flex';
         }
 
@@ -167,19 +185,15 @@
 
         function dealFlop() {
             p_comm = [deck.shift(), deck.shift(), deck.shift()];
-            p_revealed = 0; // 最初は全部裏
+            p_rev = 0;
             sync();
             document.getElementById('btn-flop').style.display = 'none';
             document.getElementById('btn-reveal').style.display = 'inline-block';
         }
 
         function revealOne() {
-            if (p_revealed < p_comm.length) {
-                p_revealed++;
-                sync();
-            }
-            // 全部めくれたら「次を追加」を表示
-            if (p_revealed >= p_comm.length) {
+            if (p_rev < p_comm.length) { p_rev++; sync(); }
+            if (p_rev >= p_comm.length) {
                 document.getElementById('btn-reveal').style.display = 'none';
                 if (p_comm.length < 5) document.getElementById('btn-turn').style.display = 'inline-block';
             }
@@ -187,27 +201,25 @@
 
         function dealNext() {
             p_comm.push(deck.shift());
-            sync(); // 追加した時点では p_revealed は変わらないので裏のまま
+            sync();
             document.getElementById('btn-turn').style.display = 'none';
             document.getElementById('btn-reveal').style.display = 'inline-block';
         }
 
         function sync() {
-            connections.forEach(conn => {
-                if(conn) conn.send({ type: 'COMM', cards: p_comm, revealed: p_revealed });
-            });
+            connections.forEach(conn => { if(conn) conn.send({ type: 'COMM', cards: p_comm, rev: p_rev }); });
         }
 
         function resetGame() {
-            deck = createDeck();
-            p_comm = []; p_revealed = 0;
+            deck = createSecureDeck();
+            p_comm = []; p_rev = 0;
             connections.forEach(conn => { if(conn) conn.send({ type: 'RESET' }); });
             document.getElementById('btn-flop').style.display = 'inline-block';
             document.getElementById('btn-reveal').style.display = 'none';
             document.getElementById('btn-turn').style.display = 'none';
         }
 
-        // --- 子：ロジック ---
+        // --- 子ロジック ---
         function goChildScanner() {
             showScreen('child-scan-screen');
             const scanner = new Html5Qrcode("reader");
@@ -223,12 +235,11 @@
                 const parentId = params.get('p');
                 const slot = params.get('s');
                 showScreen('child-main-screen');
-                
                 const conn = peer.connect(parentId, { metadata: { slot: parseInt(slot) } });
                 conn.on('data', (data) => {
                     if (data.type === 'HOLE') { c_hole = data.cards; renderHole(); }
-                    if (data.type === 'COMM') { c_comm = data.cards; c_revealed = data.revealed; renderComm(); }
-                    if (data.type === 'RESET') { c_hole = []; c_comm = []; c_revealed = 0; renderHole(); renderComm(); }
+                    if (data.type === 'COMM') { c_comm = data.cards; c_rev = data.rev; renderComm(); }
+                    if (data.type === 'RESET') { c_hole = []; c_comm = []; c_rev = 0; renderHole(); renderComm(); }
                     updateRank();
                 });
             }
@@ -240,7 +251,7 @@
             c_hole.forEach(c => {
                 const div = document.createElement('div');
                 div.className = `card ${c.c}`;
-                div.innerHTML = `<div>${c.v}<br>${c.s}</div>`;
+                div.innerHTML = `<div>${c.s}</div><div>${c.v}</div>`;
                 area.appendChild(div);
             });
         }
@@ -250,9 +261,9 @@
             area.innerHTML = "";
             c_comm.forEach((c, i) => {
                 const div = document.createElement('div');
-                if (i < c_revealed) {
+                if (i < c_rev) {
                     div.className = `card ${c.c}`;
-                    div.innerHTML = `<div>${c.v}<br>${c.s}</div>`;
+                    div.innerHTML = `<div>${c.s}</div><div>${c.v}</div>`;
                 } else {
                     div.className = `card back`;
                 }
@@ -260,13 +271,12 @@
             });
         }
 
-        // --- 役判定 ---
         function updateRank() {
             const display = document.getElementById('hand-rank');
-            if (c_hole.length < 2) { display.innerText = "カード待機中..."; return; }
-            const visibleComm = c_comm.slice(0, c_revealed);
-            const all = [...c_hole, ...visibleComm];
-            if (all.length < 5) { display.innerText = "判定中..."; return; }
+            if (c_hole.length < 2) { display.innerText = "WAITING..."; return; }
+            const vis = c_comm.slice(0, c_rev);
+            const all = [...c_hole, ...vis];
+            if (all.length < 5) { display.innerText = "CHECKING..."; return; }
             display.innerText = judge(all);
         }
 
@@ -275,29 +285,27 @@
             const suits = cards.map(c => c.s);
             const values = cards.map(c => valMap[c.v]).sort((a,b) => b-a);
             const counts = {}; values.forEach(v => counts[v] = (counts[v] || 0) + 1);
-            const countArray = Object.values(counts).sort((a,b) => b-a);
-            const suitCounts = {}; suits.forEach(s => suitCounts[s] = (suitCounts[s] || 0) + 1);
-            const isFlush = Object.values(suitCounts).some(c => c >= 5);
-            const unique = [...new Set(values)];
-            if (unique.includes(14)) unique.push(1);
-            unique.sort((a,b) => b-a);
-            let isStr = false;
-            for (let i=0; i <= unique.length - 5; i++) {
-                if (unique[i] - unique[i+4] === 4) { isStr = true; break; }
-            }
-            if (isFlush && isStr) {
-                const fSuit = Object.keys(suitCounts).find(s => suitCounts[s] >= 5);
-                const fVals = cards.filter(c => c.s === fSuit).map(c => valMap[c.v]);
-                if ([14,13,12,11,10].every(v => fVals.includes(v))) return "ロイヤルフラッシュ";
+            const cArr = Object.values(counts).sort((a,b) => b-a);
+            const sCounts = {}; suits.forEach(s => sCounts[s] = (sCounts[s] || 0) + 1);
+            const isF = Object.values(sCounts).some(c => c >= 5);
+            const uni = [...new Set(values)];
+            if (uni.includes(14)) uni.push(1);
+            uni.sort((a,b) => b-a);
+            let isS = false;
+            for (let i=0; i <= uni.length - 5; i++) { if (uni[i] - uni[i+4] === 4) { isS = true; break; } }
+            if (isF && isS) {
+                const fs = Object.keys(sCounts).find(s => sCounts[s] >= 5);
+                const fv = cards.filter(c => c.s === fs).map(c => valMap[c.v]);
+                if ([14,13,12,11,10].every(v => fv.includes(v))) return "ロイヤルフラッシュ";
                 return "ストレートフラッシュ";
             }
-            if (countArray[0] === 4) return "フォーカード";
-            if (countArray[0] === 3 && countArray[1] >= 2) return "フルハウス";
-            if (isFlush) return "フラッシュ";
-            if (isStr) return "ストレート";
-            if (countArray[0] === 3) return "スリーカード";
-            if (countArray[0] === 2 && countArray[1] === 2) return "ツーペア";
-            if (countArray[0] === 2) return "ワンペア";
+            if (cArr[0] === 4) return "フォーカード";
+            if (cArr[0] === 3 && cArr[1] >= 2) return "フルハウス";
+            if (isF) return "フラッシュ";
+            if (isS) return "ストレート";
+            if (cArr[0] === 3) return "スリーカード";
+            if (cArr[1] === 2) return "ツーペア";
+            if (cArr[0] === 2) return "ワンペア";
             return "ハイカード";
         }
     </script>
