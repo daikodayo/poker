@@ -25,39 +25,40 @@
 
         button { cursor: pointer; border-radius: 25px; border: 1.5px solid var(--gold); background: rgba(0,0,0,0.6); color: white; font-weight: bold; padding: 10px; transition: 0.1s; }
         button:active { transform: scale(0.95); opacity: 0.8; }
-        button:disabled { opacity: 0.15 !important; cursor: default; filter: grayscale(1); }
+        button:disabled { opacity: 0.1 !important; cursor: default; filter: grayscale(1); }
 
-        .btn-home { position: absolute; top: 10px; left: 10px; padding: 6px 15px; font-size: 10px; z-index: 2000; }
+        .btn-home { position: absolute; top: 10px; left: 10px; padding: 6px 15px; font-size: 10px; z-index: 2000; border-radius: 5px; }
 
-        /* テーブル */
+        /* ガイドメッセージ（中央POT下） */
+        #bet-guide { 
+            margin-top: 10px; color: var(--gold); font-weight: bold; font-size: 12px; 
+            background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 10px; text-align: center; min-height: 24px;
+        }
+
         .table-container { flex: 1; position: relative; width: 100%; overflow: hidden; }
         .center-area {
             position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%);
             display: flex; flex-direction: column; align-items: center; z-index: 50; width: 100%;
         }
         .pot-box { background: rgba(0,0,0,0.85); padding: 5px 15px; border-radius: 15px; border: 2px solid var(--gold); text-align: center; }
-        
-        #bet-guide { 
-            margin-top: 10px; color: var(--gold); font-weight: bold; font-size: 12px; 
-            background: rgba(0,0,0,0.7); padding: 5px 12px; border-radius: 10px; text-align: center;
-        }
-
         .comm-row { display: flex; gap: 4px; margin-top: 10px; min-height: 50px; }
 
         /* プレイヤー表示 */
         .player-node { position: absolute; width: 80px; text-align: center; font-size: 9px; z-index: 100; transition: all 0.5s ease-in-out; }
         .player-node.folded { opacity: 0.25; filter: grayscale(1); }
         .p-box { background: rgba(0,0,0,0.85); padding: 5px; border-radius: 12px; border: 1.5px solid #555; position: relative; }
+        
         .active-turn .p-box { border: 2.5px solid var(--turn-green) !important; box-shadow: 0 0 15px var(--turn-green); }
-        .dealer-btn { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; background: white; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; border: 1.5px solid #333; }
+        .dealer-btn { position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; background: white; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; border: 1px solid #333; }
 
-        .card { width: 32px; height: 46px; background: white; border-radius: 3px; color: black; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #999; }
+        .card { width: 32px; height: 46px; background: white; border-radius: 3px; color: black; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #999; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .card.back { background: var(--card-red) !important; border: 1.5px solid white; color: white !important; }
 
         /* 操作パネル */
         .bottom-panel { background: rgba(0,0,0,0.95); border-top: 1.5px solid var(--gold); padding: 10px 10px 25px 10px; z-index: 200; }
         .action-btns { display: flex; gap: 8px; width: 100%; max-width: 400px; margin: 0 auto 10px auto; }
         .action-btns button { flex: 1; padding: 14px; font-size: 13px; }
+
         .chip-row { display: flex; gap: 8px; justify-content: center; }
         .chip-btn {
             width: 45px; height: 45px; border-radius: 50%; border: 2px dashed rgba(0,0,0,0.2);
@@ -65,10 +66,8 @@
             font-size: 10px; color: black; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.4);
         }
         .chip-btn span { font-size: 8px; display: block; }
-        .chip-btn.disabled { opacity: 0.2; pointer-events: none; }
 
-        /* スキャナー */
-        #child-scan-screen { background: #000; justify-content: center; align-items: center; }
+        /* スキャナーUI */
         .scanner-frame { position: relative; width: 260px; height: 260px; border: 2px solid rgba(255,255,255,0.2); border-radius: 20px; overflow: hidden; }
         .scan-anim { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--gold); box-shadow: 0 0 15px var(--gold); animation: scanM 2.5s infinite linear; }
         @keyframes scanM { 0% { top: 0; } 100% { top: 100%; } }
@@ -85,22 +84,22 @@
 
     <button class="btn-home" onclick="location.reload()">HOME</button>
 
-    <!-- メニュー -->
-    <div id="choice-screen" class="screen active" style="justify-content:center; align-items:center; padding: 20px;">
+    <!-- 1. メイン画面 -->
+    <div id="choice-screen" class="screen active" style="justify-content:center; align-items:center;">
         <h1 style="color:var(--gold); font-size: 42px; margin-bottom:10px;">Texas Hold'em</h1>
-        <p style="margin-bottom:40px; opacity:0.8; letter-spacing: 3px; font-weight:bold;">5 ROUND CHALLENGE</p>
-        <button onclick="initBotGame()" style="padding:18px; font-size:20px; background:var(--gold); color:black; width:100%; max-width:280px; border:none; margin-bottom:20px;">BOT 対戦開始</button>
-        <button onclick="goParentAuth()" style="width:100%; max-width:250px; padding:12px; margin-bottom:10px;">親(ディーラー)を開始</button>
-        <button onclick="goChildScanner()" style="width:100%; max-width:250px; padding:12px;">子(プレイヤー)で参加</button>
+        <p style="margin-bottom:40px; opacity:0.8; letter-spacing: 3px; font-weight:bold;">FULL ROUND RULES</p>
+        <button onclick="initBotGame()" style="padding:18px; font-size:20px; background:var(--gold); color:black; width:280px; border:none; margin-bottom:20px;">BOT 対戦開始</button>
+        <button onclick="goParentAuth()" style="width:250px; padding:12px; margin-bottom:10px;">親(ディーラー)を開始</button>
+        <button onclick="goChildScanner()" style="width:250px; padding:12px;">子(プレイヤー)で参加</button>
     </div>
 
-    <!-- 親機パネル -->
+    <!-- 親管理画面 -->
     <div id="parent-auth-screen" class="screen" style="justify-content:center; align-items:center;">
         <h2 style="color:var(--gold)">DEALER LOGIN</h2>
         <input type="password" id="pass-input" placeholder="Password" style="padding:15px; border-radius:10px; width:220px; text-align:center; font-size: 20px; color: black; margin-top:10px;">
         <button onclick="checkParentPass()" style="margin-top:25px; padding:12px 60px; background:var(--gold); color:black;">Login</button>
     </div>
-    <div id="parent-main-screen" class="screen" style="padding-top:50px; overflow-y: auto; padding-bottom: 20px;">
+    <div id="parent-main-screen" class="screen" style="padding-top:50px; overflow-y: auto; padding-bottom: 30px;">
         <h2 style="color:var(--gold); text-align:center; font-size: 20px;">DEALER PANEL</h2>
         <div class="pot-box" style="margin: 15px auto; width: 160px;">POT: $<span id="p-pot-val">0</span></div>
         <div style="display:flex; justify-content:center; gap:8px; margin:15px 0;" id="parent-slots">
@@ -114,31 +113,31 @@
         <button id="p-btn-next" onclick="dealNext()" style="padding:15px; width:85%; margin: 4px auto; display:none; background:var(--gold); color:black;">追加</button>
         <hr style="width:85%; margin:15px auto; opacity:0.2;">
         <button id="p-btn-showdown" onclick="onlineShowdown()" style="padding:15px; width:85%; margin: 4px auto; display:none; color:var(--turn-green); border-color:var(--turn-green);">ラウンド終了(手札公開)</button>
-        <button onclick="resetOnlineGame()" style="color:#ff4d4d; border-color:#ff4d4d; margin:25px auto; width:140px; font-size:10px; padding:8px;">Reset Table</button>
+        <button onclick="location.reload()" style="color:#ff4d4d; border-color:#ff4d4d; margin:20px auto; width:140px; font-size:10px;">Reset Table</button>
     </div>
 
     <!-- プレイ画面 -->
     <div id="play-screen" class="screen">
-        <div style="position:absolute; top:15px; right:15px; color:var(--gold); font-weight:bold; font-size:12px; z-index: 100;" id="match-display">ROUND 1/5</div>
         <div class="table-container" id="table-area">
             <div class="center-area">
                 <div class="pot-box">
-                    <div style="font-size:9px; color:var(--gold);">TOTAL POT</div>
-                    <div style="font-size:22px; font-weight:bold;">$<span id="pot-val">0</span></div>
+                    <div style="font-size:9px; color:var(--gold); font-weight:bold;">TOTAL POT</div>
+                    <div style="font-size:20px; font-weight:bold;">$<span id="pot-val">0</span></div>
                 </div>
+                <!-- メッセージガイド -->
                 <div id="bet-guide">待機中...</div>
                 <div class="comm-row" id="comm-cards"></div>
             </div>
         </div>
         <div id="hand-rank" style="text-align:center; color:var(--gold); font-weight:bold; height:25px; font-size:18px;"></div>
         <div class="bottom-panel">
-            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:8px; padding: 0 5px;">
-                <span>BAL: $<span id="my-bal">1820</span></span>
-                <span style="color:var(--gold)">BET: $<span id="my-bet-total">0</span></span>
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:8px; padding: 0 5px;">
+                <span>BALANCE: $<span id="my-bal">1820</span></span>
+                <span style="color:var(--gold)">MY BET: $<span id="my-bet-total">0</span></span>
             </div>
             <div class="action-btns">
                 <button onclick="handleFold()" id="btn-fold" style="background:#333;">FOLD</button>
-                <button onclick="handleCall()" id="btn-call">CALL / CHK</button>
+                <button onclick="handleCallCheck()" id="btn-call">CALL / CHECK</button>
                 <button onclick="nextPhase()" id="btn-next" style="display:none; background:var(--gold); color:black; border:none;">NEXT PHASE</button>
             </div>
             <div class="chip-row">
@@ -151,18 +150,7 @@
         </div>
     </div>
 
-    <!-- モーダル -->
-    <div id="result-panel" class="modal">
-        <div style="color:var(--gold); font-size:12px; font-weight:bold;">ROUND WINNER</div>
-        <div id="res-name" style="font-size:32px; font-weight:bold; margin:10px 0;">YOU</div>
-        <div id="res-hand" style="font-size:16px; opacity:0.8; margin-bottom:20px;">-</div>
-        <button id="res-next-btn" onclick="startBotRound()" style="padding:15px 50px; background:var(--gold); color:black; border:none; width:100%;">次のラウンドへ</button>
-    </div>
-    <div id="final-panel" class="modal">
-        <h2 style="color:var(--gold); font-size:28px;">FINAL RESULTS</h2>
-        <div id="ranking-list" style="width:100%; margin:20px 0;"></div>
-        <button onclick="location.reload()" style="padding:15px; background:var(--gold); color:black; border:none; width:100%;">EXIT</button>
-    </div>
+    <!-- 子スキャナー -->
     <div id="child-scan-screen" class="screen" style="justify-content:center; align-items:center;">
         <h2 style="color:var(--gold); margin-bottom:20px;">Scan QR</h2>
         <div class="scanner-frame"><div id="reader" style="width: 100%; height: 100%;"></div><div class="scan-anim"></div></div>
@@ -227,7 +215,6 @@
             document.body.appendChild(container);
         }
 
-        // オンライン配布：1試合終わるごとに親がこれを押す
         function dealAllHole() {
             p_pot = 0; p_comm = []; p_rev = 0; currentMaxBet = 0; deck = createDeck();
             document.getElementById('p-btn-deal').style.display = 'none';
@@ -237,7 +224,7 @@
             document.getElementById('p-btn-showdown').style.display = 'none';
 
             let activeSlots = []; connections.forEach((c, i) => { if(c) activeSlots.push(i); });
-            if(activeSlots.length < 1) return alert("プレイヤーが接続していません");
+            if(activeSlots.length < 1) return alert("プレイヤーなし");
             dealerIdx = activeSlots[matchCount % activeSlots.length];
             turnIdx = activeSlots[(activeSlots.indexOf(dealerIdx) + 1) % activeSlots.length];
             matchCount++;
@@ -246,16 +233,10 @@
         }
 
         function dealFlop() { p_comm = [deck.shift(), deck.shift(), deck.shift()]; p_rev = 0; syncDealer(); document.getElementById('p-btn-flop').style.display='none'; document.getElementById('p-btn-rev').style.display='inline-block'; }
-        function revealOne() { if(p_rev < p_comm.length) { p_rev++; syncDealer(); } if(p_rev >= p_comm.length) { document.getElementById('p-btn-rev').style.display='none'; if(p_comm.length < 5) document.getElementById('p-btn-next').style.display='inline-block'; else document.getElementById('p-btn-showdown').style.display='inline-block'; } }
+        function revealOne() { if(p_rev < p_comm.length) p_rev++; syncDealer(); if(p_rev >= p_comm.length) { document.getElementById('p-btn-rev').style.display='none'; if(p_comm.length < 5) document.getElementById('p-btn-next').style.display='inline-block'; else document.getElementById('p-btn-showdown').style.display='inline-block'; } }
         function dealNext() { p_comm.push(deck.shift()); syncDealer(); document.getElementById('p-btn-next').style.display='none'; document.getElementById('p-btn-rev').style.display='inline-block'; }
         function syncDealer() { document.getElementById('p-pot-val').innerText = p_pot; connections.forEach(c => c && c.send({type:'COMM', cards:p_comm, rev:p_rev, pot:p_pot, turn: turnIdx, maxBet: currentMaxBet})); }
-        function onlineShowdown() { 
-            connections.forEach(c => c && c.send({type:'SHOWDOWN'})); 
-            document.getElementById('p-btn-showdown').style.display = 'none';
-            document.getElementById('p-btn-deal').innerText = "次の試合を開始";
-            document.getElementById('p-btn-deal').style.display = 'block';
-        }
-        function resetOnlineGame() { location.reload(); }
+        function onlineShowdown() { connections.forEach(c => c && c.send({type:'SHOWDOWN'})); document.getElementById('p-btn-showdown').style.display='none'; document.getElementById('p-btn-deal').style.display='block'; document.getElementById('p-btn-deal').innerText="次の試合を開始"; }
 
         // --- 子機能 ---
         function goChildScanner() { showScreen('child-scan-screen'); const scanner = new Html5Qrcode("reader"); scanner.start({facingMode:"environment"}, {fps:10, qrbox:250}, (t) => { scanner.stop(); location.href = t; }); }
@@ -267,13 +248,8 @@
                 window.activeConn = conn;
                 conn.on('data', (d) => {
                     if(d.type==='START') {
-                        players = [];
-                        d.activeSlots.forEach(id => { players.push({ id: id, name: id===mySlotIdx ? "YOU" : "P"+(id+1), bal: 1820, cards: [], chips: {1:20,5:20,10:20,25:20,50:20}, isFolded: false, currentBet: 0, isConnected: true }); });
-                        players.find(p=>p.id===mySlotIdx).cards = d.cards;
-                        dealerIdx = d.dealer; turnIdx = d.turn; phase = 0; matchCount = d.matchCount;
-                        document.getElementById('btn-next').style.display = 'none';
-                        document.getElementById('btn-call').style.display = 'inline-block';
-                        document.getElementById('btn-fold').style.display = 'inline-block';
+                        players = []; d.activeSlots.forEach(id => { players.push({ id: id, name: id===mySlotIdx ? "YOU" : "P"+(id+1), bal: 1820, cards: [], chips: {1:20,5:20,10:20,25:20,50:20}, isFolded: false, currentBet: 0, isConnected: true, hasActed: false }); });
+                        players.find(p=>p.id===mySlotIdx).cards = d.cards; dealerIdx = d.dealer; turnIdx = d.turn; phase = 0; matchCount = d.matchCount;
                     }
                     if(d.type==='COMM') { commCards = d.cards; p_rev = d.rev; pot = d.pot; turnIdx = d.turn; currentMaxBet = d.maxBet; }
                     if(d.type==='SHOWDOWN') { phase = 4; determineWinner(); }
@@ -293,16 +269,14 @@
         function startBotRound() {
             matchCount++; if(matchCount > 5) return showFinalResults();
             phase = 0; pot = 0; p_rev = 0; currentMaxBet = 0;
-            dealerIdx = (dealerIdx + 1) % players.length;
-            turnIdx = (dealerIdx + 1) % players.length;
+            dealerIdx = (dealerIdx + 1) % players.length; turnIdx = (dealerIdx + 1) % players.length;
             deck = createDeck(); commCards = [];
             players.forEach(p => { p.cards = [deck.shift(), deck.shift()]; p.isFolded = false; p.currentBet = 0; p.hasActed = false; });
-            showScreen('play-screen');
-            document.getElementById('match-display').innerText = `ROUND ${matchCount}/5`;
+            showScreen('play-screen'); document.getElementById('match-display').innerText = `ROUND ${matchCount}/5`;
             document.getElementById('btn-next').style.display = 'none';
             document.getElementById('btn-call').style.display = 'inline-block';
             document.getElementById('btn-fold').style.display = 'inline-block';
-            renderTable(); checkTurn();
+            renderTable(); checkBotTurn();
         }
 
         function renderTable() {
@@ -348,36 +322,19 @@
 
             const callAmt = currentMaxBet - me.currentBet;
             const myTurn = (turnIdx === mySlotIdx);
-            
-            if(myTurn) {
-                if(callAmt > 0) document.getElementById('bet-guide').innerText = `あと $${callAmt} 賭ける必要があります`;
-                else document.getElementById('bet-guide').innerText = "あなたの番です（チェック可能）";
-            } else {
-                document.getElementById('bet-guide').innerText = turnIdx === -1 ? "全員一致" : `${players.find(p=>p.id===turnIdx)?.name || "待機中"}を待っています`;
-            }
-
+            document.getElementById('bet-guide').innerText = myTurn ? (callAmt > 0 ? `あと $${callAmt} 賭ける必要があります` : "あなたの番です") : `${players.find(p=>p.id===turnIdx)?.name || "待機中"}を待っています`;
             document.getElementById('btn-call').innerText = callAmt > 0 ? `CALL ($${callAmt})` : "CHECK";
             document.getElementById('btn-call').disabled = !myTurn || (me.bal < callAmt) || (callAmt > 0 && me.currentBet < currentMaxBet);
             document.getElementById('btn-fold').disabled = !myTurn;
-            
             [1, 5, 10, 25, 50].forEach(v => {
                 const btn = document.getElementById('btn-c'+v);
-                if(btn) {
-                    btn.querySelector('span').innerText = me.chips[v];
-                    btn.classList.toggle('disabled', !myTurn || me.chips[v] <= 0);
-                }
+                if(btn) btn.classList.toggle('disabled', !myTurn || me.chips[v] <= 0);
             });
             const rank = document.getElementById('hand-rank');
             rank.innerText = me.isFolded ? "FOLDED" : (p_rev >= 3 ? judge([...me.cards, ...commCards.slice(0, p_rev)]) : "");
         }
 
-        function checkTurn() {
-            if (isBot && turnIdx !== mySlotIdx && turnIdx !== -1) {
-                const bot = players.find(p=>p.id===turnIdx);
-                if(bot && !bot.isFolded) setTimeout(botAction, 1500);
-            }
-        }
-
+        function checkBotTurn() { if (isBot && turnIdx !== mySlotIdx && turnIdx !== -1) setTimeout(botAction, 1500); }
         function botAction() {
             const bot = players.find(p=>p.id===turnIdx);
             const callAmt = currentMaxBet - bot.currentBet;
@@ -394,11 +351,11 @@
                 if(isBot) document.getElementById('btn-next').style.display = 'block';
                 document.getElementById('btn-call').style.display = 'none';
                 document.getElementById('btn-fold').style.display = 'none';
-                document.getElementById('bet-guide').innerText = "全員一致しました。";
+                document.getElementById('bet-guide').innerText = "全員の賭け金が一致しました。";
             } else {
                 do { turnIdx = (turnIdx + 1) % players.length; } while (!players.find(p=>p.id===turnIdx)?.isConnected || players.find(p=>p.id===turnIdx)?.isFolded);
             }
-            renderTable(); if(isBot) checkTurn();
+            renderTable(); if(isBot) checkBotTurn();
         }
 
         function addBet(val) {
@@ -410,16 +367,16 @@
                     players.forEach(p => { if(!p.isFolded) p.hasActed = false; });
                 }
                 me.hasActed = true;
-                if (!isBot && window.activeConn) window.activeConn.send({type:'BET', val: val, currentBet: me.currentBet});
+                if (!isBot && window.activeConn) window.activeConn.send({type:'ACTION', action: 'BET', val: val, currentBet: me.currentBet});
                 renderTable();
             }
         }
 
-        function handleCall() {
+        function handleCallCheck() {
             const me = players.find(p=>p.id===mySlotIdx);
-            const callAmt = currentMaxBet - me.currentBet;
-            if (me && me.bal >= callAmt) {
-                me.bal -= callAmt; me.currentBet += callAmt; pot += callAmt; me.hasActed = true;
+            const diff = currentMaxBet - me.currentBet;
+            if (me.bal >= diff) {
+                me.bal -= diff; me.currentBet += diff; pot += diff; me.hasActed = true;
                 if (!isBot && window.activeConn) {
                     let next = (turnIdx + 1) % players.length;
                     while(!players.find(p=>p.id===next).isConnected || players.find(p=>p.id===next).isFolded) next = (next + 1) % players.length;
@@ -452,7 +409,7 @@
             document.getElementById('btn-next').style.display = 'none';
             document.getElementById('btn-call').style.display = 'inline-block';
             document.getElementById('btn-fold').style.display = 'inline-block';
-            renderTable(); if(isBot) checkTurn();
+            renderTable(); if(isBot) checkBotTurn();
         }
 
         function determineWinner() {
@@ -463,12 +420,17 @@
             const winner = res[0].p; winner.bal += pot;
             document.getElementById('res-name').innerText = winner.name;
             document.getElementById('res-hand').innerText = res[0].name + " WIN $" + pot;
-            if(isBot) document.getElementById('result-panel').style.display = 'flex';
+            if(isBot) {
+                 const modal = document.createElement('div');
+                 modal.className = "modal"; modal.id = "result-modal";
+                 modal.innerHTML = `<div style="color:var(--gold); font-size:12px;">ROUND WINNER</div><div style="font-size:28px;">${winner.name}</div><div style="margin-bottom:20px;">${res[0].name} WIN $${pot}</div><button onclick="startBotRound()">次のラウンドへ</button>`;
+                 document.body.appendChild(modal);
+                 modal.style.display = 'flex';
+            }
             document.getElementById('node-' + winner.id)?.classList.add('winner-glow');
         }
 
         function showFinalResults() {
-            document.getElementById('result-panel').style.display = 'none';
             const ranked = [...players].filter(p=>p.isConnected).sort((a,b) => b.bal - a.bal);
             const list = document.getElementById('ranking-list'); list.innerHTML = "";
             ranked.forEach((p, i) => {
@@ -476,7 +438,7 @@
                 item.innerHTML = `<span>${i+1}. ${p.name}</span> <span style="color:var(--gold)">$${p.bal}</span>`;
                 list.appendChild(item);
             });
-            document.getElementById('final-panel').style.display = 'flex';
+            showScreen('final-panel');
         }
 
         function rv(r) { return ["ハイカード","ワンペア","ツーペア","スリーカード","ストレート","フラッシュ","フルハウス","フォーカード","ストレートフラッシュ","ロイヤルフラッシュ"].indexOf(r); }
